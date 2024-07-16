@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.swal2-container{
+    z-index: 999 !important;
+}
+.modal-box {
+    z-index: 99 !important;
+}

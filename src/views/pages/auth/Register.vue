@@ -48,7 +48,7 @@ const signUp = async () => {
     <div class="mt-4 p-8 container mx-auto">
         <div class="p-4 sm:max-w-2xl border rounded-sm mx-auto">
             <h1 class="mb-4 text-center text-2xl font-semibold uppercase">Register</h1>
-            <form @submit.prevent="signUp" action="w-full">
+            <form @submit.prevent="signUp" action="">
                 <label class="my-4 input input-bordered flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
                         class="h-4 w-4 opacity-70">

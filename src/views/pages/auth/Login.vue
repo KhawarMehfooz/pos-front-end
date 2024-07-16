@@ -6,8 +6,6 @@ import { toast } from 'vue3-toastify';
 
 const login_email = ref('')
 const login_password = ref('')
-const showAlert = ref(false)
-const alertMessage = ref('')
 const router = useRouter()
 
 const login = async () => {
@@ -21,11 +19,12 @@ const login = async () => {
             autoClose: 3000,
             type: "success"
         })
+        console.log(response)
         setTimeout(() => {
-            showAlert.value = false
             router.push('/')
         }, 3000)
     } catch (err) {
+        console.log(err)
         toast('Incorrect email or password..',{
             autoClose: 3000,
             type: "error"
@@ -38,7 +37,7 @@ const login = async () => {
     <div class="mt-4 p-8 container mx-auto">
         <div class="p-4 sm:max-w-2xl border rounded-sm mx-auto">
             <h1 class="mb-4 text-center text-2xl font-semibold uppercase">Login</h1>
-            <form @submit.prevent="login" action="w-full">
+            <form @submit.prevent="login" action="">
                 <label class=" my-4 input input-bordered flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
                         class="h-4 w-4 opacity-70">

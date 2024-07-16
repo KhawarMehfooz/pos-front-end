@@ -1,0 +1,92 @@
+import posClient from './pos-api'
+import Cookies from 'js-cookie'
+
+const AUTH_TOKEN =  `Bearer ${Cookies.get('auth_token')}`
+export const createCategory = async(category)=>{
+    const response = await posClient.post('/categories',category,{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+
+export const getCategories = async()=>{
+    const response = await posClient.get('/categories',{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+export const getCategoryById = async(id)=>{
+    const response = await posClient.get(`/category/${id}`,{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+
+export const updateCategory = async(id,data)=>{
+    const response = await posClient.put(`/category/${id}`,data,{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+
+export const deleteCategory = async(id)=>{
+    const response = await posClient.delete(`/category/${id}`,{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+
+// products
+
+export const createProduct = async(data)=>{
+    const response = await posClient.post(`/products`,data,{
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    return response.data
+}
+export const getAllProducts = async()=>{
+    const response = await posClient.get('/products',{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
+
+export const getProductById = async (id)=>{
+    const response = await posClient.get(`/product/${id}`,{
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    return response.data
+}
+
+export const updateProduct = async(id,data)=>{
+    const response = await posClient.put(`/product/${id}`,data,{
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    return response.data
+}
+export const deleteProduct = async(id)=>{
+    const response = await posClient.delete(`/product/${id}`,{
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    return response.data
+}
