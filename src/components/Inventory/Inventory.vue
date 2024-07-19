@@ -15,7 +15,6 @@ const product_price = ref('');
 const product_quantity = ref('');
 const stockCheck = ref('');
 const product_image = ref(null);
-const product_image_url = ref('');
 
 const getCategory = async (id) => {
     try {
@@ -95,6 +94,13 @@ const updateProd = async () => {
         }
 
         const response = await updateProduct(current_product_id.value, formData);
+        product_name.value = ""
+        product_category.value = ""
+        product_price.value = ""
+        product_quantity.value = ""
+        stockCheck.value = ""
+        product_image.value = null
+        existing_image_url.value = ""
         document.getElementById('editProductModal').close();
         document.getElementById('showProductsModal').close();
         Swal.fire({
@@ -213,7 +219,7 @@ onMounted(async () => {
     <dialog id="createProductModal" class="modal modal-top max-w-2xl mx-auto">
         <div class="modal-box">
             <form method="dialog">
-                <button id="closeCreateCategoryModal"
+                <button id="closeCreateProductModal"
                     class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
             <h3 class="text-lg font-bold pb-3 border-b">Create a new product</h3>
@@ -251,7 +257,7 @@ onMounted(async () => {
     <dialog id="editProductModal" class="modal modal-top max-w-2xl mx-auto">
         <div class="modal-box">
             <form method="dialog">
-                <button id="closeCreateCategoryModal"
+                <button id="closeEditProductModal"
                     class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             </form>
             <h3 class="text-lg font-bold pb-3 border-b">Update product</h3>

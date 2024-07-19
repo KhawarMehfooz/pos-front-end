@@ -99,3 +99,23 @@ export const deleteProduct = async(id)=>{
     })
     return response.data
 }
+// settings
+
+export const saveSettings = async(data)=>{
+    const response = await posClient.post('/settings',data,{
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`
+        }
+    })
+    return response.data
+}
+
+export const getSettings = async()=>{
+    const response = await posClient.get('/settings',{
+        headers: {
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`
+        }
+    })
+    return response.data
+}
