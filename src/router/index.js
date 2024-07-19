@@ -24,39 +24,54 @@ const router = createRouter({
     }
   ]
 })
-router.beforeEach(async (to, from, next) => {
-  const token = Cookies.get('auth_token')
 
-  if (token) {
-    try {
-      let isValid = await validateToken(token)
-      if (isValid) {
-        if (to.path === '/login' || to.path==='/register') {
-          toast('Already logged in. Redirecting...',{
+router.beforeEach(async (to, from, next) => {
+  const token = Cookies.get('auth_token');
+
+  const publicPaths = ['/login', '/register'];
+
+  if (publicPaths.includes(to.path)) {
+    if (token) {
+      try {
+        const isValid = await validateToken(token);
+        if (isValid) {
+          toast('Already logged in. Redirecting...', {
             type: "info",
             autoClose: 2000,
-          })
-          await new Promise(resolve => setTimeout(resolve, 2000))
-          next('/')
+          });
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          next('/');
         } else {
-          next()
+          Cookies.remove('auth_token');
+          next();
         }
-      } else {
-        Cookies.remove('auth_token')
-        next('/login')
+      } catch (err) {
+        console.error(err);
+        Cookies.remove('auth_token');
+        next();
       }
-    } catch (err) {
-      console.error(err)
-      Cookies.remove('auth_token')
-      next('/login')
+    } else {
+      next();
     }
   } else {
-    if (to.path === '/login' || to.path === '/register') {
-      next()
+    if (token) {
+      try {
+        const isValid = await validateToken(token);
+        if (isValid) {
+          next();
+        } else {
+          Cookies.remove('auth_token');
+          next('/login');
+        }
+      } catch (err) {
+        console.error(err);
+        Cookies.remove('auth_token');
+        next('/login');
+      }
     } else {
-      next('/login')
+      next('/login');
     }
   }
-})
+});
 
-export default router
+export default router;

@@ -38,3 +38,7 @@ export const loadProducts = async () => {
         console.log(err);
     }
 };
+export const getImageURL = (path) => {
+    let baseURL = import.meta.env.VITE_POS_API;
+    return `${baseURL}${path}`;
+};

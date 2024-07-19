@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { getCategories, createProduct, getCategoryById, updateProduct, getProductById, deleteProduct } from '@/services/posService';
 import Swal from 'sweetalert2';
-import { allProducts, loadProducts } from '@/utils/productUtils';
+import { allProducts, loadProducts, getImageURL } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 
 const current_product_id = ref('')
@@ -24,11 +24,6 @@ const getCategory = async (id) => {
     } catch (err) {
         console.log(err);
     }
-};
-
-const getImageURL = (path) => {
-    let baseURL = import.meta.env.VITE_POS_API;
-    return `${baseURL}${path}`;
 };
 
 const handleFileChange = (event) => {

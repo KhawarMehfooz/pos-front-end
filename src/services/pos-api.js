@@ -5,9 +5,6 @@ const AUTH_TOKEN =  `Bearer ${Cookies.get('auth_token')}`
 
 const posClient = axios.create({
   baseURL: import.meta.env.VITE_POS_API,
-  headers: {
-    "Authorization": AUTH_TOKEN
-  },
 });
 
 export default posClient;
