@@ -1,6 +1,27 @@
 <script setup>
+import { ref, onMounted, computed } from 'vue';
 import { allProducts, loadProducts, getImageURL } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
+import { loadSettings } from '@/utils/settingsUtils';
+
+let settings = ref([])
+let selectedCategory = ref('*')
+
+const filteredProducts = computed(() => {
+    if (selectedCategory.value === '*') {
+        return allProducts.value
+    }
+    return allProducts.value.filter(product => product.category === selectedCategory.value)
+})
+
+function filterProducts(categoryId) {
+    selectedCategory.value = categoryId;
+}
+
+onMounted(async () => {
+    settings = await loadSettings()
+})
+
 </script>
 
 <template>
@@ -10,19 +31,29 @@ import { allCategories, loadCategories } from '@/utils/categoryUtils';
                 <!-- Categories List -->
                 <ul
                     class="flex items-center gap-4 overflow-x-auto bg-neutral-200 border ring-gray-100 text-lg py-1 px-2 rounded-lg">
-                    <li class="" v-for="category in allCategories" :key="category._id">
-                        <button
-                        :key="category._id"
-                            class="font-semibold border border-neutral-200 py-2 px-4 bg-neutral-100 rounded-xl">{{ category.categoryName }}</button>
+                    <li>
+                        <button key="all" data-filter="*" @click="filterProducts('*')"
+                            class="font-semibold border border-neutral-200 py-2 px-4 bg-neutral-100 rounded-xl">
+                            All
+                        </button>
+                    </li>
+                    <li class="" v-for="category in allCategories" :key="category._id"
+                        @click="filterProducts(category._id)">
+                        <button :key="category._id" data-filter="{{ category._id }}"
+                            class="font-semibold border border-neutral-200 py-2 px-4 bg-neutral-100 rounded-xl">{{
+                                category.categoryName }}</button>
                     </li>
                 </ul>
                 <!-- Products Grid -->
                 <div style="max-height: calc(100vh - 150px);"
                     class="overflow-y-auto mt-4 grid gap-4 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    <article v-for="product in allProducts" :key="product._id" class="md:w-48 border bg-white p-4 rounded-lg ring-gray-100 cursor-pointer">
-                        <img :src="getImageURL(product.image)" alt="" class="rounded-full h-40 w-40 aspect-square mx-auto object-cover ">
+                    <article v-for="product in filteredProducts" :key="product._id"
+                        class="md:w-48 border bg-white p-4 rounded-lg ring-gray-100 cursor-pointer">
+                        <img :src="getImageURL(product.image)" alt=""
+                            class="rounded-full h-40 w-40 aspect-square mx-auto object-cover ">
                         <h2 class="mt-2 text-xl text-center">{{ product.name }}</h2>
-                        <p class="text-center font-bold text-xl">{{ product.price }}</p>
+                        <p class="text-center font-bold text-xl"> {{ }} {{ settings.currencySymbol + product.price }}
+                        </p>
                     </article>
                 </div>
             </div>
