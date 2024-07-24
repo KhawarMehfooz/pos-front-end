@@ -1,3 +1,4 @@
+import { popScopeId } from 'vue'
 import posClient from './pos-api'
 import Cookies from 'js-cookie'
 
@@ -140,3 +141,16 @@ export const createCustomer = async(data)=>{
     })
     return response.data
 }
+
+// transaction
+
+export const createTransaction = async(data)=>{
+    const response = await posClient.post('/transactions',data,{
+        headers: {
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`,
+            'Content-Type': 'application/json',
+        }
+
+    })
+    return response.data
+} 

@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, toValue } from 'vue';
 import { allProducts, loadProducts, getImageURL } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 import { loadSettings } from '@/utils/settingsUtils';
-import { createCustomer, getCustomers } from '@/services/posService'
+import { createCustomer, getCustomers, createTransaction } from '@/services/posService'
 
 import Swal from 'sweetalert2';
 
@@ -12,6 +12,67 @@ let customers = ref([])
 let customerName = ref('')
 let customerAddress = ref('')
 let customerPhone = ref('')
+let settings = ref([])
+let selectedCategory = ref('*')
+let cart = ref([]);
+let paidAmount = ref(0);
+let selectedCustomer = ref('walk-in');
+
+const addProductToCart = (productId) => {
+    const product = allProducts.value.find(p => p._id === productId);
+    if (!product) return;
+
+    const cartItem = cart.value.find(item => item.product._id === productId);
+    if (cartItem) {
+        if (cartItem.quantity < product.quantity) {
+            cartItem.quantity++;
+        } else {
+            Swal.fire({
+                title: 'Out of Stock',
+                text: 'The requested quantity is more than available stock',
+                icon: 'error'
+            });
+        }
+    } else {
+        cart.value.push({
+            product,
+            quantity: 1,
+            price: product.price
+        });
+    }
+};
+
+const updateQuantity = (cartItem) => {
+    const product = allProducts.value.find(p => p._id === cartItem.product._id);
+    if (cartItem.quantity > product.quantity) {
+        Swal.fire({
+            title: 'Out of Stock',
+            text: 'The requested quantity is more than available stock',
+            icon: 'error'
+        });
+        cartItem.quantity = product.quantity;
+    }
+};
+
+const removeFromCart = (productId) => {
+    cart.value = cart.value.filter(item => item.product._id !== productId);
+};
+
+let discount = ref(0);
+
+const subtotal = computed(() => (cart.value.reduce((sum, item) => sum + (item.quantity * item.price), 0) || 0).toFixed(2));
+const discountAmount = computed(() => ((subtotal.value * discount.value) / 100 || 0).toFixed(2));
+const grandTotal = computed(() => (subtotal.value - discountAmount.value || 0).toFixed(2));
+const vatAmount = computed(() => {
+    const vatPercentage = parseFloat(settings.vatPercentage) || 0;
+    const grandTotalValue = parseFloat(grandTotal.value) || 0;
+    return (grandTotalValue * vatPercentage / 100).toFixed(2);
+});
+
+const finalTotal = computed(() => (parseFloat(grandTotal.value) + parseFloat(vatAmount.value) || 0).toFixed(2));
+const changeAmount = computed(() => (paidAmount.value - finalTotal.value || 0).toFixed(2));
+
+
 
 const loadCustomers = async () => {
     try {
@@ -45,8 +106,7 @@ const createNewCustomer = async () => {
 
 }
 
-let settings = ref([])
-let selectedCategory = ref('*')
+
 
 const filteredProducts = computed(() => {
     if (selectedCategory.value === '*') {
@@ -57,6 +117,34 @@ const filteredProducts = computed(() => {
 
 function filterProducts(categoryId) {
     selectedCategory.value = categoryId;
+}
+
+const processPayment = async () => {
+    const transactionData = {
+        orderNumber: Math.floor(Date.now() / 10000),
+        customer: selectedCustomer.value,
+        discount: discount.value,
+        subtotal: subtotal.value,
+        tax: vatAmount.value,
+        items: cart.value.map(item => ({ product: item.product._id, quantity: item.quantity })),
+        total: finalTotal.value,
+        paid: paidAmount.value,
+        change: changeAmount.value
+    }
+    try {
+        await createTransaction(transactionData);
+        document.getElementById('paymentModal').close()
+        Swal.fire({
+            title: 'Payment Successful',
+            text: 'The transaction has been processed successfully.',
+            icon: 'success'
+        });
+        cart.value = [];
+        discount.value = 0;
+        paidAmount.value = 0;
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 onMounted(async () => {
@@ -90,6 +178,7 @@ onMounted(async () => {
                 <div style="max-height: calc(100vh - 150px);"
                     class="overflow-y-auto mt-4 grid gap-4 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     <article v-for="product in filteredProducts" :key="product._id"
+                        @click="addProductToCart(product._id)"
                         class="md:w-48 border bg-white p-4 rounded-lg ring-gray-100 cursor-pointer">
                         <img :src="getImageURL(product.image)" alt=""
                             class="rounded-full h-40 w-40 aspect-square mx-auto object-cover ">
@@ -107,15 +196,16 @@ onMounted(async () => {
                         <fieldset class="w-full">
                             <form action="w-full">
                                 <select class="py-2 w-full rounded border focus:outline-none cursor-pointer"
-                                    name="customer" id="">
+                                    name="customer" v-model="selectedCustomer" id="">
                                     <option value="walk-in">Walk in customer</option>
-                                    <option v-for="customer in customers" value="">{{ customer.name }} </option>
+                                    <option v-for="customer in customers" :key="customer._id" :value="customer._id">{{
+                                        customer.name }} </option>
                                 </select>
                             </form>
                         </fieldset>
                         <button title="Create Customer"
                             class="bg-yellow-500 py-1 text-xl font-semibold px-4 rounded-md border-2 border-yellow-600"
-                            onclick="createCustomerModal.show()">+</button>
+                            onclick="createCustomerModal.showModal()">+</button>
                     </div>
                     <!-- Items In Cart -->
                     <div class="mt-4">
@@ -156,19 +246,24 @@ onMounted(async () => {
                                                     <col width="20%">
                                                 </colgroup>
                                                 <tbody class="divide-y divide-gray-200">
-                                                    <tr>
+                                                    <tr v-for="item in cart" :key="item.product._id">
                                                         <td
                                                             class="pl-3 py-4 whitespace-wrap text-sm font-medium text-gray-800 ">
-                                                            Shoe</td>
+                                                            {{ item.product.name }}
+                                                        </td>
                                                         <td class="py-4 whitespace-nowrap text-sm text-gray-800 ">
                                                             <input class="w-full border py-1 outline-none px-2"
-                                                                value="4" type="number" name="" id="">
+                                                                value="4" type="number" v-model="item.quantity"
+                                                                @change="updateQuantity(item)"
+                                                                :max="item.product.quantity" name="" id="">
                                                         </td>
                                                         <td class="pl-3 py-4 whitespace-nowrap text-sm text-gray-800">
-                                                            $55</td>
+                                                            {{ settings.currencySymbol + item.price * item.quantity }}
+                                                        </td>
                                                         <td
                                                             class="pr-3 py-4 whitespace-nowrap text-end text-sm font-medium">
                                                             <button type="button"
+                                                                @click="removeFromCart(item.product._id)"
                                                                 class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 ">Delete</button>
                                                         </td>
                                                     </tr>
@@ -187,23 +282,27 @@ onMounted(async () => {
                     <div class="p-3">
                         <div class="my-4 flex items-center justify-between">
                             <p class="text-lg ">Subtotal</p>
-                            <p class="text-lg font-semibold">$55</p>
+                            <p class="text-lg font-semibold">{{ settings.currencySymbol + subtotal }}</p>
                         </div>
                         <div class="my-4 flex items-center justify-between">
                             <p class="text-lg ">Discount (%)</p>
                             <p class="text-lg font-semibold">
                                 <input class="outline-none border w-[80px] px-2 text-lg" type="number" min="0"
-                                    name="discount" id="discount">
+                                    name="discount" v-model="discount" id="discount">
                             </p>
+                        </div>
+                        <div v-if="settings.chargeVat === '1'" class="my-4 flex items-center justify-between">
+                            <p class="text-lg ">VAT ({{ settings.vatPercentage }}%)</p>
+                            <p class="text-3xl font-semibold">{{ settings.currencySymbol + vatAmount }}</p>
                         </div>
                         <div class="my-4 flex items-center justify-between">
                             <p class="text-lg ">Grand Total</p>
-                            <p class="text-3xl font-semibold">$55</p>
+                            <p class="text-3xl font-semibold">{{ settings.currencySymbol + finalTotal }}</p>
                         </div>
                         <div class="flex items-center justify-center gap-8">
                             <button class="bg-green-500 rounded-md text-lg py-2 w-[50%] text-white font-semibold">Hold
                                 Order</button>
-                            <button
+                            <button onclick="paymentModal.showModal()"
                                 class="bg-sky-500 rounded-md text-lg text-white font-semibold py-2 w-[50%]">Pay</button>
                         </div>
                     </div>
@@ -226,6 +325,28 @@ onMounted(async () => {
                     <input name="customerPhone" v-model="customerPhone" type="number" placeholder="Phone Number"
                         class="input input-bordered w-full my-4" />
                     <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Create</button>
+                </form>
+            </div>
+        </dialog>
+        <!-- Payment Modal -->
+        <dialog id="paymentModal" class="modal modal-top  max-w-xl mx-auto">
+            <div class="modal-box">
+                <form method="dialog">
+                    <button id="closePaymentModal"
+                        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+                <h3 class="text-lg font-bold pb-3 border-b">Enter Payment Details</h3>
+                <form @submit.prevent="processPayment" class="">
+                    <div class="my-4">
+                        <label for="paidAmount" class="block text-lg">Amount Paid by Customer</label>
+                        <input name="paidAmount" v-model="paidAmount" type="number" class="input input-bordered w-full"
+                            required />
+                    </div>
+                    <div v-if="changeAmount >= 0" class="my-4">
+                        <p class="text-lg">Change to be returned:</p>
+                        <p class="text-3xl font-semibold">{{ settings.currencySymbol + changeAmount }}</p>
+                    </div>
+                    <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Process Payment</button>
                 </form>
             </div>
         </dialog>
