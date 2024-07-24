@@ -142,6 +142,18 @@ export const createCustomer = async(data)=>{
     return response.data
 }
 
+export const getCustomerById = async(id)=>{
+    const response = await posClient.get(`/customer/${id}`,{
+        headers: {
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`,
+
+        }
+
+        }
+    )
+    return response.data
+}
+
 // transaction
 
 export const createTransaction = async(data)=>{

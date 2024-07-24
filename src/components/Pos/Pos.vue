@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed, toValue } from 'vue';
-import { allProducts, loadProducts, getImageURL } from '@/utils/productUtils';
+import { allProducts, loadProducts, getImageURL, } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 import { loadSettings } from '@/utils/settingsUtils';
-import { createCustomer, getCustomers, createTransaction } from '@/services/posService'
+import { createCustomer, getCustomers, getCustomerById, createTransaction, getProductById } from '@/services/posService'
 
 import Swal from 'sweetalert2';
 
@@ -17,6 +17,23 @@ let selectedCategory = ref('*')
 let cart = ref([]);
 let paidAmount = ref(0);
 let selectedCustomer = ref('walk-in');
+
+const receipt = ref({
+    customer: '',
+    customerName: '',
+    customerPhone: '',
+    items: [],
+    orderNumber: '',
+    subtotal: '',
+    discount: '',
+    tax: '',
+    total: '',
+    paid: '',
+    change: '',
+    date: '',
+    time: ''
+});
+
 
 const addProductToCart = (productId) => {
     const product = allProducts.value.find(p => p._id === productId);
@@ -58,15 +75,23 @@ const removeFromCart = (productId) => {
     cart.value = cart.value.filter(item => item.product._id !== productId);
 };
 
+const clearCart = () => {
+    cart.value = []
+}
+
 let discount = ref(0);
 
 const subtotal = computed(() => (cart.value.reduce((sum, item) => sum + (item.quantity * item.price), 0) || 0).toFixed(2));
 const discountAmount = computed(() => ((subtotal.value * discount.value) / 100 || 0).toFixed(2));
 const grandTotal = computed(() => (subtotal.value - discountAmount.value || 0).toFixed(2));
 const vatAmount = computed(() => {
-    const vatPercentage = parseFloat(settings.vatPercentage) || 0;
-    const grandTotalValue = parseFloat(grandTotal.value) || 0;
-    return (grandTotalValue * vatPercentage / 100).toFixed(2);
+    if (settings.chargeVat === '1') {
+
+        const vatPercentage = parseFloat(settings.vatPercentage) || 0;
+        const grandTotalValue = parseFloat(grandTotal.value) || 0;
+        return (grandTotalValue * vatPercentage / 100).toFixed(2);
+    }
+    return 0
 });
 
 const finalTotal = computed(() => (parseFloat(grandTotal.value) + parseFloat(vatAmount.value) || 0).toFixed(2));
@@ -130,22 +155,51 @@ const processPayment = async () => {
         total: finalTotal.value,
         paid: paidAmount.value,
         change: changeAmount.value
-    }
+    };
     try {
         await createTransaction(transactionData);
-        document.getElementById('paymentModal').close()
-        Swal.fire({
-            title: 'Payment Successful',
-            text: 'The transaction has been processed successfully.',
-            icon: 'success'
-        });
+        document.getElementById('paymentModal').close();
+
+
+        showReceipt(transactionData);
+
         cart.value = [];
         discount.value = 0;
         paidAmount.value = 0;
+        document.getElementById('receiptModal').showModal();
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
-}
+};
+
+const showReceipt = async (transactionData) => {
+    const customerDetails = selectedCustomer.value !== 'walk-in' ? await getCustomerById(selectedCustomer.value) : {};
+    const itemsWithProductDetails = await Promise.all(
+        transactionData.items.map(async item => {
+            const product = await getProductById(item.product);
+
+            console.log(customerDetails);
+
+            receipt.customerName = customerDetails.name || 'Walk-in';
+            receipt.customerPhone = customerDetails.phone || '';
+            return {
+                ...item,
+                productName: product.name,
+                price: product.price
+            };
+        })
+    );
+
+    receipt.value = {
+        ...transactionData,
+        customerName: customerDetails.name || 'Walk-in',
+        customerPhone: customerDetails.phone || '',
+        items: itemsWithProductDetails,
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+    };
+};
+
 
 onMounted(async () => {
     settings = await loadSettings()
@@ -231,9 +285,10 @@ onMounted(async () => {
                                                     <th scope="col"
                                                         class=" pl-3 py-3 text-start text-xs font-medium text-gray-500 uppercase">
                                                         price</th>
-                                                    <th scope="col"
-                                                        class="pr-3 py-3 text-end text-xs font-medium text-gray-500 uppercase">
-                                                        Action</th>
+                                                    <th scope="col" title="Clear Cart" @click="clearCart()"
+                                                        class="cursor-pointer pr-3 py-3 text-end text-xl font-medium text-red-600 uppercase">
+                                                        <i class="fa-solid fa-xmark"></i>
+                                                    </th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -264,7 +319,9 @@ onMounted(async () => {
                                                             class="pr-3 py-4 whitespace-nowrap text-end text-sm font-medium">
                                                             <button type="button"
                                                                 @click="removeFromCart(item.product._id)"
-                                                                class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 ">Delete</button>
+                                                                title="Remove Item"
+                                                                class="inline-flex items-center gap-x-2 text-xl font-semibold rounded-lg border border-transparent text-red-500 hover:text-red-600 disabled:opacity-50 "><i
+                                                                    class="fa-solid fa-xmark"></i></button>
                                                         </td>
                                                     </tr>
 
@@ -348,6 +405,116 @@ onMounted(async () => {
                     </div>
                     <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Process Payment</button>
                 </form>
+            </div>
+        </dialog>
+
+        <!-- Receipt Modal -->
+        <dialog id="receiptModal" class="modal modal-top  max-w-fit mx-auto">
+            <div class="modal-box">
+                <form method="dialog">
+                    <button id="closeReceiptModal"
+                        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+                <div class="w-[302px] border mx-auto my-3 font-martian">
+                    <!-- Store Info -->
+                    <div class="">
+                        <img class="w-24 mx-auto object-cover" :src="getImageURL(settings.storeLogo)" alt="logo" />
+                        <p class="text-center">{{ settings.storeName }}</p>
+                        <p class="text-center"><i class="fa-solid fa-phone"></i> {{ settings.storeContactNumber }}</p>
+                        <p class="text-center"><i class="fa-solid fa-location-dot"></i> {{ settings.storeLocation }}</p>
+                    </div>
+                    <hr class="border-t" />
+                    <!-- Sales Receipt -->
+                    <div class="my-2">
+                        <h3 class="text-center text-lg font-semibold uppercase">
+                            Sales Receipt
+                        </h3>
+                    </div>
+                    <hr class="border-t" />
+                    <!-- Customer Details -->
+                    <div class="my-2">
+                        <h3 class="text-center text-md font-semibold uppercase">Customer Details</h3>
+                        <p class="text-sm">Customer Name: {{ receipt.customerName }}</p>
+                        <p class="text-sm" v-if="receipt.customerPhone">Customer Phone: {{
+                            receipt.customerPhone }}</p>
+                    </div>
+                    <hr class="border-t" />
+
+                    <div class="my-2">
+                        <h3 class="text-center text-md font-semibold uppercase">
+                            Order Details
+                        </h3>
+                    </div>
+                    <hr class="border-t" />
+
+                    <table class="w-full mb-6 text-left">
+                        <colgroup>
+                            <col width="70%" />
+                            <col width="20%" />
+                            <col width="10%" />
+                        </colgroup>
+                        <thead class="border-b">
+                            <tr class="">
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr v-for="item in receipt.items" :key="item.product">
+                                <td>{{ item.productName }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ settings.currencySymbol + item.price * item.quantity }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="my-2">
+                        <hr />
+                        <div class="my-1 flex items-center justify-between">
+                            <p class="text-md font-semibold">Sub Total:</p>
+                            <p class="font-semibold">{{ settings.currencySymbol + receipt.subtotal }}</p>
+                        </div>
+                        <hr />
+                        <div class="my-1 flex items-center justify-between">
+                            <p class="text-md font-semibold">Discount:</p>
+                            <p class="font-semibold">{{ +receipt.discount }}%</p>
+                        </div>
+                        <hr />
+                        <div class="my-1 flex items-center justify-between" v-if="settings.chargeVat === '1'">
+                            <p class="text-md font-semibold">VAT(<span>{{ settings.vatPercentage }}</span>%):</p>
+                            <p class="font-semibold">{{ settings.currencySymbol + receipt.tax }}</p>
+                        </div>
+                        <hr />
+                        <div class="flex items-center justify-between text-2xl">
+                            <p class="font-semibold">Total:</p>
+                            <p class="font-semibold">{{ settings.currencySymbol + receipt.total }}</p>
+                        </div>
+                        <div class="my-1 flex items-center justify-between text-md">
+                            <p class="font-semibold">Paid:</p>
+                            <p class="font-semibold">{{ settings.currencySymbol + receipt.paid }}</p>
+                        </div>
+                        <div class="my-1 flex items-center justify-between text-md">
+                            <p class="font-semibold">Change:</p>
+                            <p class="font-semibold">{{ settings.currencySymbol + receipt.change }}</p>
+                        </div>
+                        <hr />
+                        <br />
+                        <h3 class="text-center uppercase font-semibold">Thank You</h3>
+                        <br />
+                        <hr />
+                        <div class="flex items-center justify-between text-sm">
+                            <p>{{ receipt.date }}</p>
+                            <p>{{ receipt.time }}</p>
+                            <p>Admin</p>
+                        </div>
+                        <hr />
+                    </div>
+                    <p class="text-neutral-400 text-xs text-center">
+                        {{ receipt.orderNumber }}
+                    </p>
+                </div>
+                <button class="block btn btn-primary w-fit mx-auto text-lg font-martian"><i
+                        class="fa-solid fa-print"></i> Print Receipt</button>
             </div>
         </dialog>
     </div>

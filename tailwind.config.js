@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,vue}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        martian: ['"Martian Mono"', 'monospace'],
+      },
+    },
   },
   plugins: [
     require("@tailwindcss/typography"),
