@@ -119,3 +119,24 @@ export const getSettings = async()=>{
     })
     return response.data
 }
+
+// Customers
+
+export const getCustomers = async()=>{
+    const response = await posClient.get('/customers',{
+        headers: {
+            'Authorization': `Bearer ${Cookies.get('auth_token')}`
+        }
+    })
+    return response.data
+}
+
+export const createCustomer = async(data)=>{
+    const response = await posClient.post('/customers',data,{
+        headers: {
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`,
+            'Content-Type': 'application/json',
+        }
+    })
+    return response.data
+}

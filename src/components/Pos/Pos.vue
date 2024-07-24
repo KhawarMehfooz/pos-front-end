@@ -3,6 +3,47 @@ import { ref, onMounted, computed } from 'vue';
 import { allProducts, loadProducts, getImageURL } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 import { loadSettings } from '@/utils/settingsUtils';
+import { createCustomer, getCustomers } from '@/services/posService'
+
+import Swal from 'sweetalert2';
+
+let customers = ref([])
+
+let customerName = ref('')
+let customerAddress = ref('')
+let customerPhone = ref('')
+
+const loadCustomers = async () => {
+    try {
+        customers.value = await getCustomers()
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+const createNewCustomer = async () => {
+    const formData = new FormData()
+    formData.append('customerName', customerName.value)
+    formData.append('customerAddress', customerAddress.value)
+    formData.append('customerPhone', customerPhone.value)
+    try {
+        const res = await createCustomer(formData)
+        customerName.value = ''
+        customerAddress.value = ''
+        customerPhone.value = ''
+        document.getElementById('createCustomerModal').close()
+        Swal.fire({
+            title: 'Customer Created Successfully',
+            text: 'You have successfully created a new customer',
+            icon: 'success'
+        })
+        loadCustomers()
+
+    } catch (err) {
+        console.log(err)
+    }
+
+}
 
 let settings = ref([])
 let selectedCategory = ref('*')
@@ -20,6 +61,7 @@ function filterProducts(categoryId) {
 
 onMounted(async () => {
     settings = await loadSettings()
+    await loadCustomers()
 })
 
 </script>
@@ -52,7 +94,7 @@ onMounted(async () => {
                         <img :src="getImageURL(product.image)" alt=""
                             class="rounded-full h-40 w-40 aspect-square mx-auto object-cover ">
                         <h2 class="mt-2 text-xl text-center">{{ product.name }}</h2>
-                        <p class="text-center font-bold text-xl"> {{ }} {{ settings.currencySymbol + product.price }}
+                        <p class="text-center font-bold text-xl">{{ settings.currencySymbol + product.price }}
                         </p>
                     </article>
                 </div>
@@ -66,13 +108,14 @@ onMounted(async () => {
                             <form action="w-full">
                                 <select class="py-2 w-full rounded border focus:outline-none cursor-pointer"
                                     name="customer" id="">
-                                    <option value="">Walk in customer</option>
-                                    <option value="">John Doe </option>
+                                    <option value="walk-in">Walk in customer</option>
+                                    <option v-for="customer in customers" value="">{{ customer.name }} </option>
                                 </select>
                             </form>
                         </fieldset>
-                        <button
-                            class="bg-yellow-500 py-1 text-xl font-semibold px-4 rounded-md border-2 border-yellow-600">+</button>
+                        <button title="Create Customer"
+                            class="bg-yellow-500 py-1 text-xl font-semibold px-4 rounded-md border-2 border-yellow-600"
+                            onclick="createCustomerModal.show()">+</button>
                     </div>
                     <!-- Items In Cart -->
                     <div class="mt-4">
@@ -139,6 +182,7 @@ onMounted(async () => {
                         </div>
                     </div>
                 </div>
+                <!-- Summary -->
                 <div class="absolute bottom-0 mt-4 w-full border-t">
                     <div class="p-3">
                         <div class="my-4 flex items-center justify-between">
@@ -166,5 +210,25 @@ onMounted(async () => {
                 </div>
             </div>
         </section>
+        <!-- Create customer modal -->
+        <dialog id="createCustomerModal" class="modal modal-top  max-w-xl mx-auto">
+            <div class="modal-box">
+                <form method="dialog">
+                    <button id="closeCreateCustomerModal"
+                        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                </form>
+                <h3 class="text-lg font-bold pb-3 border-b">Create a new customer</h3>
+                <form @submit.prevent="createNewCustomer" class="">
+                    <input name="customerName" v-model="customerName" type="text" placeholder="Customer Name"
+                        class="input input-bordered w-full my-4" />
+                    <input name="customerAddress" v-model="customerAddress" type="text" placeholder="Address"
+                        class="input input-bordered w-full my-4" />
+                    <input name="customerPhone" v-model="customerPhone" type="number" placeholder="Phone Number"
+                        class="input input-bordered w-full my-4" />
+                    <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Create</button>
+                </form>
+            </div>
+        </dialog>
     </div>
+
 </template>
