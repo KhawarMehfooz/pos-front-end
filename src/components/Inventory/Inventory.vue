@@ -225,28 +225,57 @@ onMounted(async () => {
             <h3 class="text-lg font-bold pb-3 border-b">Create a new product</h3>
             <form @submit.prevent="saveProduct" enctype="multipart/form-data">
                 <div class="md:flex md:items-center md:gap-4">
-                    <input name="productName" v-model="product_name" type="text" placeholder="Product Name"
-                        class="input input-bordered w-full my-4" />
-                    <select name="categoryName" v-model="product_category" class="select select-bordered w-full">
-                        <option value="" disabled>Select Category</option>
-                        <option v-for="category in allCategories" name="productCategory" :key="category._id"
-                            :value="category._id">{{
-                                category.categoryName }}</option>
-                    </select>
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <input name="productPrice" v-model="product_price" type="number" placeholder="Product Price"
-                        class="input input-bordered w-full my-4" />
-                    <input name="productQuantity" v-model="product_quantity" type="number"
-                        placeholder="Product Quantity" class="input input-bordered w-full my-4" />
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <label class="label cursor-pointer w-full">
-                        <span class="label-text">Stock Check</span>
-                        <input type="checkbox" v-model="stockCheck" class="toggle ml-4" />
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Name</span>
+                        </div>
+                        <input name="productName" v-model="product_name" type="text"
+                            class="input input-bordered w-full" />
                     </label>
-                    <input name="image" type="file" class="file-input file-input-bordered w-full" accept="image/*"
-                        @change="handleFileChange" />
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Category</span>
+                        </div>
+                        <select name="categoryName" v-model="product_category" class="select select-bordered w-full">
+                            <option value="" disabled>Select Category</option>
+                            <option v-for="category in allCategories" name="productCategory" :key="category._id"
+                                :value="category._id">{{
+                                    category.categoryName }}</option>
+                        </select>
+                    </label>
+
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Price</span>
+                        </div>
+                        <input name="productPrice" v-model="product_price" type="number"
+                            class="input input-bordered w-full" />
+                    </label>
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Quantity</span>
+                        </div>
+                        <input name="productQuantity" v-model="product_quantity" type="number"
+                            class="input input-bordered w-full" />
+                    </label>
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Stock Check</span>
+                            <input type="checkbox" v-model="stockCheck" class="toggle ml-4" />
+                        </div>
+                    </label>
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Image</span>
+                        </div>
+                        <input name="image" type="file" class="file-input file-input-bordered w-full" accept="image/*"
+                            @change="handleFileChange" />
+                    </label>
+
                 </div>
                 <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit my-4">Create</button>
             </form>
@@ -263,33 +292,61 @@ onMounted(async () => {
             <h3 class="text-lg font-bold pb-3 border-b">Update product</h3>
             <form @submit.prevent="updateProd" enctype="multipart/form-data">
                 <div class="md:flex md:items-center md:gap-4">
-                    <input name="productName" v-model="product_name" type="text" placeholder="Product Name"
-                        class="input input-bordered w-full my-4" />
-                    <select name="categoryName" v-model="product_category" class="select select-bordered w-full">
-                        <option value="" disabled>Select Category</option>
-                        <option v-for="category in allCategories" name="productCategory" :key="category._id"
-                            :value="category._id">{{
-                                category.categoryName }}</option>
-                    </select>
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <input name="productPrice" v-model="product_price" type="number" placeholder="Product Price"
-                        class="input input-bordered w-full my-4" />
-                    <input name="productQuantity" v-model="product_quantity" type="number"
-                        placeholder="Product Quantity" class="input input-bordered w-full my-4" />
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <label class="label cursor-pointer w-full">
-                        <span class="label-text">Stock Check</span>
-                        <input type="checkbox" v-model="stockCheck" class="toggle ml-4" />
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Name</span>
+                        </div>
+                        <input name="productName" v-model="product_name" type="text"
+                            class="input input-bordered w-full" />
                     </label>
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Category</span>
+                        </div>
+                        <select name="categoryName" v-model="product_category" class="select select-bordered w-full">
+                            <option value="" disabled>Select Category</option>
+                            <option v-for="category in allCategories" name="productCategory" :key="category._id"
+                                :value="category._id">{{
+                                    category.categoryName }}</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Price</span>
+                        </div>
+                        <input name="productPrice" v-model="product_price" type="number"
+                            class="input input-bordered w-full" />
+                    </label>
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Quantity</span>
+                        </div>
+                        <input name="productQuantity" v-model="product_quantity" type="number"
+                            class="input input-bordered w-full" />
+                    </label>
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Stock Check</span>
+                            <input type="checkbox" v-model="stockCheck" class="toggle ml-4" />
+                        </div>
+                    </label>
+
                     <label class="label cursor-pointer w-full">
                         <span class="label-text">Current Image</span>
                         <img v-if="existing_image_url" width="100" height="100" :src="existing_image_url"
                             alt="Current Product Image">
                     </label>
-                    <input name="image" type="file" class="file-input file-input-bordered w-full" accept="image/*"
-                        @change="handleFileChange" />
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Product Image</span>
+                        </div>
+                        <input name="image" type="file" class="file-input file-input-bordered w-full" accept="image/*"
+                            @change="handleFileChange" />
+                    </label>
                 </div>
                 <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit my-4">Save</button>
             </form>

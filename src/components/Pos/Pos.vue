@@ -209,7 +209,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="bg-neutral-100">
+    <div id="pos-view" class="bg-neutral-100">
         <section class=" flex gap-8 flex-col md:flex-row">
             <div style="min-height: calc(100vh - 200px);" class="md:w-[70%]">
                 <!-- Categories List -->
@@ -375,12 +375,27 @@ onMounted(async () => {
                 </form>
                 <h3 class="text-lg font-bold pb-3 border-b">Create a new customer</h3>
                 <form @submit.prevent="createNewCustomer" class="">
-                    <input name="customerName" v-model="customerName" type="text" placeholder="Customer Name"
-                        class="input input-bordered w-full my-4" />
-                    <input name="customerAddress" v-model="customerAddress" type="text" placeholder="Address"
-                        class="input input-bordered w-full my-4" />
-                    <input name="customerPhone" v-model="customerPhone" type="number" placeholder="Phone Number"
-                        class="input input-bordered w-full my-4" />
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Customer Name</span>
+                        </div>
+                        <input name="customerName" v-model="customerName" type="text"
+                            class="input input-bordered w-full" />
+                    </label>
+                    <label  class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Customer Address</span>
+                        </div>
+                        <input name="customerAddress" v-model="customerAddress" type="text"
+                            class=" input input-bordered w-full" />
+                    </label>
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Customer Contact Number</span>
+                        </div>
+                        <input name="customerPhone" v-model="customerPhone" type="number"
+                            class="input input-bordered w-full" />
+                    </label>
                     <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Create</button>
                 </form>
             </div>

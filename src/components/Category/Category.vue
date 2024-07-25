@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { createCategory, getCategories, updateCategory, deleteCategory } from '@/services/posService'
 import { loadProducts } from '@/utils/productUtils';
-import { allCategories,loadCategories } from '@/utils/categoryUtils';
+import { allCategories, loadCategories } from '@/utils/categoryUtils';
 
 import Swal from 'sweetalert2'
 
@@ -160,8 +160,13 @@ onMounted(async () => {
             </form>
             <h3 class="text-lg font-bold pb-3 border-b">Create a new category</h3>
             <form @submit.prevent="newCategory" class="">
-                <input name="categoryName" v-model="category_name" type="text" placeholder="Category Name"
-                    class="input input-bordered w-full my-4" />
+                <label  class="form-control w-full mb-4">
+                    <div class="label">
+                        <span class="label-text">Category Name</span>
+                    </div>
+                    <input name="categoryName" v-model="category_name" type="text" placeholder="Category Name"
+                        class="input input-bordered w-full" />
+                </label>
                 <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Create</button>
             </form>
         </div>
@@ -176,8 +181,13 @@ onMounted(async () => {
             </form>
             <h3 class="text-lg font-bold pb-3 border-b">Update the category</h3>
             <form @submit.prevent="saveCategory" class="">
-                <input name="categoryName" v-model="category_name" type="text" placeholder="Category Name"
-                    class="input input-bordered w-full my-4" />
+                <label  class="form-control w-full mb-4">
+                    <div class="label">
+                        <span class="label-text">Category Name</span>
+                    </div>
+                    <input name="categoryName" v-model="category_name" type="text" placeholder="Category Name"
+                        class="input input-bordered w-full" />
+                </label>
                 <button type="submit" class="block btn btn-primary px-6 py-0 ml-auto w-fit">Save</button>
             </form>
         </div>

@@ -78,24 +78,51 @@ const showVatPercentage = computed(() => charge_vat.value);
             <h3 class="text-lg font-bold pb-3 border-b">Settings</h3>
             <form @submit.prevent="savePosSettings" class="mt-4" enctype="multipart/form-data">
                 <div class="md:flex md:items-center md:gap-4">
-                    <input type="text" name="storeName" v-model="store_name" placeholder="Store Name"
-                        class="input input-bordered w-full my-4" />
-                    <input type="text" name="storeLocation" v-model="store_location" placeholder="Address"
-                        class="input input-bordered w-full my-4" />
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <input type="number" name="storeContactNumber" v-model="contact_number" placeholder="Contact Number"
-                        class="input input-bordered w-full my-4" />
-                    <input type="text" name="currencySymbol" v-model="currency_symbol" placeholder="Currency Symbol"
-                        class="input input-bordered w-full my-4" />
-                </div>
-                <div class="md:flex md:items-center md:gap-4">
-                    <label class="label cursor-pointer w-full">
-                        <span class="label-text">Charge VAT</span>
-                        <input type="checkbox" name="chargeVat" v-model="charge_vat" class="toggle" />
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Store Name</span>
+                        </div>
+                        <input type="text" name="storeName" v-model="store_name" placeholder="Store Name"
+                            class="input input-bordered w-full" />
                     </label>
-                    <input v-if="showVatPercentage" type="number" name="vatPercentage" v-model="vat_percentage"
-                        placeholder="VAT %" class="input input-bordered w-full my-4" />
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Store Location</span>
+                        </div>
+                        <input type="text" name="storeLocation" v-model="store_location" placeholder="Address"
+                            class="input input-bordered w-full" />
+                    </label>
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Store Contact Info</span>
+                        </div>
+                        <input type="number" name="storeContactNumber" v-model="contact_number"
+                            placeholder="Contact Number" class="input input-bordered w-full" />
+                    </label>
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Currency Symbol</span>
+                        </div>
+                        <input type="text" name="currencySymbol" v-model="currency_symbol" placeholder="Currency Symbol"
+                            class="input input-bordered w-full" />
+                    </label>
+                </div>
+                <div class="md:flex md:items-center md:gap-4">
+                    <label  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">Charge VAT</span>
+                            <input type="checkbox" name="chargeVat" v-model="charge_vat" class="toggle" />
+                        </div>
+                    </label>
+                    <label v-if="showVatPercentage"  class="form-control w-full mb-4">
+                        <div class="label">
+                            <span class="label-text">VAT Percentage</span>
+                        </div>
+                        <input type="number" name="vatPercentage" v-model="vat_percentage" placeholder="VAT %"
+                            class="input input-bordered w-full" />
+                    </label>
                 </div>
                 <div class="md:flex md:items-center md:gap-4">
                     <div class="w-full">
