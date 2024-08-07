@@ -3,7 +3,8 @@ import { ref, onMounted, computed, toValue } from 'vue';
 import { allProducts, loadProducts, getImageURL, } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 import { loadSettings } from '@/utils/settingsUtils';
-import { createCustomer, getCustomers, getCustomerById, createTransaction, getProductById } from '@/services/posService'
+import { createCustomer, getCustomers, getCustomerById, createTransaction, getProductById, getAllTransaction } from '@/services/posService'
+import DataTable from 'datatables.net-vue3'
 
 import Swal from 'sweetalert2';
 
@@ -200,9 +201,67 @@ const showReceipt = async (transactionData) => {
     };
 };
 
+const orders = ref([]);
+
+const headers = ref([
+    {
+        title: 'Order ID',
+        value: 'orderNumber'
+    }, {
+        title: 'Order Date',
+        value: 'createdAt'
+    },
+    {
+        title: 'Total',
+        value: 'total'
+    }, {
+        title: 'Paid',
+        value: 'paid'
+    }, {
+        title: 'Change',
+        value: 'change'
+    }
+])
+
+const formatDate = (dateString) => {
+    const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-GB', options).replace(',', '');
+};
+const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '';
+    return `${settings.currencySymbol}${parseFloat(value).toFixed(2)}`;
+};
+
+const fetchTransactions = async () => {
+    try {
+        const data = await getAllTransaction();
+        orders.value = data;
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+    }
+};
+
+const formattedOrders = computed(() => {
+    return orders.value.map(order => ({
+        ...order,
+        total: formatCurrency(order.total),
+        paid: formatCurrency(order.paid),
+        change: formatCurrency(order.change),
+        createdAt: formatDate(order.createdAt),
+    }));
+});
+
+const searchQuery = ref('');
+const filteredOrders = computed(() => {
+    if (!searchQuery.value) return formattedOrders.value;
+    return formattedOrders.value.filter(order =>
+        order.orderNumber.toString().toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+});
 
 onMounted(async () => {
     settings = await loadSettings()
+    await fetchTransactions()
     await loadCustomers()
 })
 
@@ -375,21 +434,21 @@ onMounted(async () => {
                 </form>
                 <h3 class="text-lg font-bold pb-3 border-b">Create a new customer</h3>
                 <form @submit.prevent="createNewCustomer" class="">
-                    <label  class="form-control w-full">
+                    <label class="form-control w-full">
                         <div class="label">
                             <span class="label-text">Customer Name</span>
                         </div>
                         <input name="customerName" v-model="customerName" type="text"
                             class="input input-bordered w-full" />
                     </label>
-                    <label  class="form-control w-full">
+                    <label class="form-control w-full">
                         <div class="label">
                             <span class="label-text">Customer Address</span>
                         </div>
                         <input name="customerAddress" v-model="customerAddress" type="text"
                             class=" input input-bordered w-full" />
                     </label>
-                    <label  class="form-control w-full mb-4">
+                    <label class="form-control w-full mb-4">
                         <div class="label">
                             <span class="label-text">Customer Contact Number</span>
                         </div>
@@ -533,5 +592,42 @@ onMounted(async () => {
             </div>
         </dialog>
     </div>
+    <div id="transaction-view" class="hidden">
+        <!-- Transactions -->
+        <div class="bg-white rounded-md border p-4">
+            <div class="flex gap-4 flex-col md:flex-row">
+                <div style="min-height: calc(100vh - 200px);" class="relative rounded-md border md:w-[30%]">
+                    <h2>Products</h2>
+                </div>
+                <div style="min-height: calc(100vh - 200px); " class=" rounded-md border md:w-[70%]">
+                    <v-card flat>
+                        <v-card-title class="d-flex align-center pe-2">
+                            <v-icon icon="mdi-video-input-component"></v-icon> &nbsp;
+                            Transactions
+
+                            <v-spacer></v-spacer>
+
+                            <v-text-field v-model="searchQuery" density="compact" label="Search by Order Number..."
+                                prepend-inner-icon="mdi-magnify" variant="solo-filled" flat hide-details
+                                single-line></v-text-field>
+                        </v-card-title>
+
+                        <v-divider></v-divider>
+                        <v-data-table :headers="headers" :items="filteredOrders" class="elevation-1 transactions-table" style="overflow-y: auto;">
+
+                        </v-data-table>
+                    </v-card flat>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </template>
+
+<style scoped>
+ .transactions-table >>> .v-data-table-header__content {
+  font-size: 1.125rem; 
+  font-weight: 600;
+}
+
+</style>

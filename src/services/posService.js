@@ -166,3 +166,12 @@ export const createTransaction = async(data)=>{
     })
     return response.data
 } 
+export const getAllTransaction = async()=>{
+    const response = await posClient.get('/transactions',{
+        headers: {
+            "Authorization": `Bearer ${Cookies.get('auth_token')}`,
+
+        }
+    })
+    return response.data;
+}
