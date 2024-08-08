@@ -3,7 +3,7 @@ import { ref, onMounted, computed, toValue } from 'vue';
 import { allProducts, loadProducts, getImageURL, } from '@/utils/productUtils';
 import { allCategories, loadCategories } from '@/utils/categoryUtils';
 import { loadSettings } from '@/utils/settingsUtils';
-import { createCustomer, getCustomers, getCustomerById, createTransaction, getProductById, getAllTransaction } from '@/services/posService'
+import { createCustomer, getCustomers, getCustomerById, createTransaction, getProductById, getAllTransaction, getAllProducts } from '@/services/posService'
 import DataTable from 'datatables.net-vue3'
 
 import Swal from 'sweetalert2';
@@ -259,10 +259,69 @@ const filteredOrders = computed(() => {
     );
 });
 
+const productTableHeaders = ref([
+    {
+        title: 'Product Name',
+        value: 'name'
+    }, {
+        title: 'Sold',
+        value: 'sold'
+    },
+    {
+        title: 'Available',
+        value: 'available'
+    }, {
+        title: 'Total Sales',
+        value: 'totalSales'
+    },
+])
+
+let transactionForProductTable = ref([])
+let computedProducts = ref([])
+let productMap = {}
+let products = ref([])
+
+const fetchProductsAndTransactions = async () => {
+    try {
+        transactionForProductTable.value = await getAllTransaction();
+        products.value = await getAllProducts();
+
+        products.value.forEach(prod => {
+            productMap[prod._id] = {
+                name: prod.name,
+                available: prod.quantity,
+                sold: 0,
+                totalSales: 0,
+            };
+        });
+
+        for (let transaction of transactionForProductTable.value) {
+            for (let item of transaction.items) {
+                const product = productMap[item.product];
+                try {
+                    const productDetails = await getProductById(item.product);
+                    const price = productDetails.price || 0;
+                    if (product) {
+                        product.sold += item.quantity;
+                        product.totalSales += item.quantity * price;
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }
+
+        computedProducts.value = Object.values(productMap);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+};
+
 onMounted(async () => {
     settings = await loadSettings()
     await fetchTransactions()
     await loadCustomers()
+    await fetchProductsAndTransactions();
 })
 
 </script>
@@ -597,7 +656,13 @@ onMounted(async () => {
         <div class="bg-white rounded-md border p-4">
             <div class="flex gap-4 flex-col md:flex-row">
                 <div style="min-height: calc(100vh - 200px);" class="relative rounded-md border md:w-[30%]">
-                    <h2>Products</h2>
+                    <h2 class="p-4 text-xl font-semibold">Products Overview</h2>
+                    <hr>
+                    <v-data-table :headers="productTableHeaders" :items="computedProducts" class="elevation-1 products-table">
+                        <template v-slot:body.cell.totalSales="{ item }">
+                            {{ formatCurrency(item.totalSales) }}
+                        </template>
+                    </v-data-table>
                 </div>
                 <div style="min-height: calc(100vh - 200px); " class=" rounded-md border md:w-[70%]">
                     <v-card flat>
@@ -607,13 +672,14 @@ onMounted(async () => {
 
                             <v-spacer></v-spacer>
 
-                            <v-text-field v-model="searchQuery" density="compact" label="Search by Order Number..."
+                            <v-text-field v-model="searchQuery" density="compact" label="Search by Order ID..."
                                 prepend-inner-icon="mdi-magnify" variant="solo-filled" flat hide-details
                                 single-line></v-text-field>
                         </v-card-title>
 
                         <v-divider></v-divider>
-                        <v-data-table :headers="headers" :items="filteredOrders" class="elevation-1 transactions-table" style="overflow-y: auto;">
+                        <v-data-table :headers="headers" :items="filteredOrders" class="elevation-1 transactions-table"
+                            style="overflow-y: auto;">
 
                         </v-data-table>
                     </v-card flat>
@@ -625,9 +691,11 @@ onMounted(async () => {
 </template>
 
 <style scoped>
- .transactions-table >>> .v-data-table-header__content {
-  font-size: 1.125rem; 
-  font-weight: 600;
+.transactions-table:deep(.v-data-table-header__content) {
+    font-size: 1.125rem;
+    font-weight: 600;
 }
-
+.products-table:deep(.v-data-table-header__content){
+    font-weight: 600;
+}
 </style>
